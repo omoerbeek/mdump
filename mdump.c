@@ -55,8 +55,7 @@ enum {
 	TIMESTAMP_ELAPSED
 } timestamp = TIMESTAMP_NONE;
 
-int decimal, iohex, fancy = 1;
-int needtid, tail, basecol, dump;
+int tail, dump;
 char *tracefile = "ktrace.out";
 char *malloc_aout = "a.out";
 struct ktr_header ktr_header;
@@ -68,8 +67,6 @@ static void ktruser(struct ktr_user *, size_t);
 static void usage(void);
 static void *xmalloc(size_t);
 
-static int screenwidth;
-
 int
 main(int argc, char *argv[])
 {
@@ -79,17 +76,7 @@ main(int argc, char *argv[])
 	const char *errstr;
 	void *m;
 
-	if (screenwidth == 0) {
-		struct winsize ws;
-
-		if (fancy && ioctl(fileno(stderr), TIOCGWINSZ, &ws) != -1 &&
-		    ws.ws_col > 8)
-			screenwidth = ws.ws_col;
-		else
-			screenwidth = 80;
-	}
-
-	while ((ch = getopt(argc, argv, "e:f:dDHlnp:RTxX")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:Dlp:")) != -1)
 		switch (ch) {
 		case 'e':
 			malloc_aout = optarg;
@@ -97,43 +84,16 @@ main(int argc, char *argv[])
 		case 'f':
 			tracefile = optarg;
 			break;
-		case 'd':
-			decimal = 1;
-			break;
 		case 'D':
 			dump = 1; 
 			break;
-		case 'H':
-			needtid = 1;
-			break;
 		case 'l':
 			tail = 1;
-			break;
-		case 'n':
-			fancy = 0;
 			break;
 		case 'p':
 			pid_opt = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "-p %s: %s", optarg, errstr);
-			break;
-		case 'R':	/* relative timestamp */
-			if (timestamp == TIMESTAMP_ABSOLUTE)
-				timestamp = TIMESTAMP_ELAPSED;
-			else
-				timestamp = TIMESTAMP_RELATIVE;
-			break;
-		case 'T':
-			if (timestamp == TIMESTAMP_RELATIVE)
-				timestamp = TIMESTAMP_ELAPSED;
-			else
-				timestamp = TIMESTAMP_ABSOLUTE;
-			break;
-		case 'x':
-			iohex = 1;
-			break;
-		case 'X':
-			iohex = 2;
 			break;
 		default:
 			usage();
@@ -213,52 +173,6 @@ fread_tail(void *buf, size_t size, size_t num)
 /*
  * Base Formatters
  */
-
-void
-showbufc(int col, unsigned char *dp, size_t datalen, int flags)
-{
-	int width;
-	unsigned char visbuf[5], *cp;
-
-	flags |= VIS_CSTYLE;
-	putchar('"');
-	col++;
-	for (; datalen > 0; datalen--, dp++) {
-		(void)vis(visbuf, *dp, flags, *(dp+1));
-		cp = visbuf;
-
-		/*
-		 * Keep track of printables and
-		 * space chars (like fold(1)).
-		 */
-		if (col == 0) {
-			(void)putchar('\t');
-			col = 8;
-		}
-		switch (*cp) {
-		case '\n':
-			col = 0;
-			(void)putchar('\n');
-			continue;
-		case '\t':
-			width = 8 - (col&07);
-			break;
-		default:
-			width = strlen(cp);
-		}
-		if (col + width > (screenwidth-2)) {
-			(void)printf("\\\n\t");
-			col = 8;
-		}
-		col += width;
-		do {
-			(void)putchar(*cp++);
-		} while (*cp);
-	}
-	if (col == 0)
-		(void)printf("       ");
-	(void)printf("\"\n");
-}
 
 struct stackframe {
 	void *caller;
@@ -377,7 +291,7 @@ usage(void)
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
-	    "[-dHDlnRTXx] [-e file] [-f file] [-p pid]\n",
+	    "[-Dl] [-e file] [-f file] [-p pid]\n",
 	    __progname);
 	exit(1);
 }
