@@ -3,6 +3,9 @@
 PROG=	mdump
 SRCS=	mdump.c addr2line.c
 
+BINDIR=	/usr/local/bin
+MANDIR=/usr/local/man/man
+
 CPPFLAGS+= -I /usr/local/include/elftoolchain
 CFLAGS+= -Wall -g
 
