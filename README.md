@@ -58,8 +58,65 @@ High optimization levels can produce debug information that
 `mdump`
 cannot interpret.
 
-How does it work?
-=================
+# An example run
+The program:
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+char *p;
+
+void f(void)
+{
+        int i;
+        void *s[64];
+
+        p = realloc(p, 4096);
+        for (i = 0; i < 64; i++)
+                s[i] = malloc(4096);
+        p = realloc(p, 8192);
+        for (i = 1; i < 64; i++)
+                free(s[i]);
+
+}
+
+int main()
+{
+        int i;
+
+        p = malloc(100);
+        for (i = 0; i < 10; i++)
+                f();
+
+        printf("done\n");
+}
+```
+Compile, run and show leaks:
+```
+$ cc -g x.c 
+$ MALLOC_OPTIONS=DTTTT ktrace -tu ./a.out 
+done
+$ mdump
+Leak sum=40960 count=10 avg=4096
+ f at /home/otto/x.c:13
+ main at /home/otto/x.c:25
+ ?? at ??:0
+
+Leak sum=8192 count=1 avg=8192
+ f at /home/otto/x.c:14
+ main at /home/otto/x.c:25
+ ?? at ??:0
+
+Leak sum=65536 count=1 avg=65536
+ __smakebuf at /usr/src/lib/libc/stdio/makebuf.c:62
+ __swsetup at /usr/src/lib/libc/stdio/wsetup.c:75
+ __vfprintf at /usr/src/lib/libc/stdio/vfprintf.c:460
+ vfprintf at /usr/src/lib/libc/stdio/vfprintf.c:264
+
+$
+```
+
+# How does it work?
 
 While running (and if enabled by `MALLOC_OPTIONS`) malloc
 stores backtrace information for allocations. 
