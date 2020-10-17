@@ -96,3 +96,13 @@ option.
 High optimization levels can produce debug information that
 .Nm
 cannot interpret.
+.Pp
+Setuid or setgid processes can only be traced by the superuser.
+.Pp
+Forking programs can be traced by using the
+.Fl i
+flag to
+.Xr ktrace 1 ,
+but selecting a single process is needed when running
+.Nm
+on the trace file generated.
