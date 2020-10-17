@@ -3,7 +3,7 @@
 This is a tool to interpet and show information generated b y my experimental
 changes to OpenBSD's `malloc`. 
 
-Please note that this will only work on a current OpenBSD sourc tree. At the moment of
+Please note that this will only work on a current OpenBSD source tree. At the moment of
 writing this that means newer than Oct 12 2020.
 
 First step is to apply the diff to `src/lib/libc/stdlib/malloc.c`, recompile and install libc:
