@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "libelftc.h"
 
@@ -746,6 +747,8 @@ addr2line(const char *object, uintptr_t addr, char **name)
 	elf_end(e);
 
 	fclose(stream);
+	close(fd);
+
 	RB_FOREACH_SAFE(cu, cutree, &cuhead, cu0) {
 		struct Func *f, *f0;
 		TAILQ_FOREACH_SAFE(f, &cu->funclist, next, f0) {
