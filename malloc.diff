@@ -5,7 +5,7 @@ RCS file: /cvs/src/lib/libc/stdlib/malloc.c,v
 retrieving revision 1.266
 diff -u -p -r1.266 malloc.c
 --- stdlib/malloc.c	12 Oct 2020 22:08:33 -0000	1.266
-+++ stdlib/malloc.c	18 Oct 2020 13:30:44 -0000
++++ stdlib/malloc.c	22 Oct 2020 15:47:33 -0000
 @@ -1,6 +1,6 @@
  /*	$OpenBSD: malloc.c,v 1.266 2020/10/12 22:08:33 deraadt Exp $	*/
  /*
@@ -374,7 +374,7 @@ diff -u -p -r1.266 malloc.c
  	EPILOGUE()
  	return r;
  }
-@@ -2060,116 +2162,243 @@ aligned_alloc(size_t alignment, size_t s
+@@ -2060,116 +2162,247 @@ aligned_alloc(size_t alignment, size_t s
  
  #ifdef MALLOC_STATS
  
@@ -568,12 +568,16 @@ diff -u -p -r1.266 malloc.c
 +	Dl_info info;
 +	int i;
 +
++	memset(&u, 0, sizeof(u));
++	u.sum = p->total_size;
++	u.count = p->count;
++
 +	if (bt == NULL) {
 +		ulog("\n");
++		utrace("mallocleakrecord", &u, sizeof(u));
 +		return;
 +	}
 +
-+	memset(&u, 0, sizeof(u));
 +	for (i = 0; i < NUM_FRAMES; i++) {
 +		const char *caller = bt->caller[i];
 +		struct stackframe *frame = &u.backtrace[i];
@@ -669,7 +673,7 @@ diff -u -p -r1.266 malloc.c
  	for (i = 0; i <= MALLOC_MAXSHIFT; i++) {
  		count = 0;
  		LIST_FOREACH(p, &d->chunk_info_list[i], entries)
-@@ -2178,87 +2407,87 @@ dump_free_chunk_info(int fd, struct dir_
+@@ -2178,87 +2411,87 @@ dump_free_chunk_info(int fd, struct dir_
  			p = LIST_FIRST(&d->chunk_dir[i][j]);
  			if (p == NULL && count == 0)
  				continue;
@@ -787,7 +791,7 @@ diff -u -p -r1.266 malloc.c
  		return;
  	for (i = 0; i < MALLOC_DELAYED_CHUNK_MASK + 1; i++) {
  		p = pool->delayed_chunks[i];
-@@ -2270,21 +2499,19 @@ malloc_dump(int fd, int poolno, struct d
+@@ -2270,21 +2503,19 @@ malloc_dump(int fd, int poolno, struct d
  		free_bytes(pool, r, p);
  		pool->delayed_chunks[i] = NULL;
  	}
@@ -813,7 +817,7 @@ diff -u -p -r1.266 malloc.c
  
  	errno = saved_errno;
  }
-@@ -2293,27 +2520,23 @@ DEF_WEAK(malloc_gdump);
+@@ -2293,27 +2524,23 @@ DEF_WEAK(malloc_gdump);
  static void
  malloc_exit(void)
  {
